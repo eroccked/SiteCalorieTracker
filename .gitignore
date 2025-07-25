@@ -1,0 +1,52 @@
+# Python кеші
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Віртуальне оточення (наприклад, venv або env)
+env/
+venv/
+ENV/
+.venv/
+.Python
+
+# Django міграції (не обов'язково, але іноді корисно)
+**/migrations/*.pyc
+**/migrations/__pycache__/
+# Якщо хочете ігнорувати всі файли міграцій (не рекомендовано):
+# **/migrations/*.py
+
+# Файли бази даних
+*.sqlite3
+*.db
+
+# Статичні файли
+#/staticfiles/
+#/static/
+#/media/
+
+# Конфіденційні файли
+.env
+*.env
+
+# Логи
+*.log
+
+# PyCharm налаштування
+.idea/
+
+# Тести (опційно)
+htmlcov/
+coverage.*
+.tox/
+.pytest_cache/
+
+# Кеші pip, build
+pip-wheel-metadata/
+build/
+dist/
+*.egg-info/
+
+# Файли ОС
+.DS_Store
+Thumbs.db
