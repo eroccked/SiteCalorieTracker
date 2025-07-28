@@ -14,7 +14,7 @@
                             <label for="food_consumed" class="form-label">Оберіть їжу:</label>
                             <select name="food_consumed" id="food_consumed" class="form-select" required>
                                 {% for food in foods %}
-                                    <option value="{{ food.name }}">{{ food.name }}</option>
+                                    <option value="{{ food.id }}">{{ food.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

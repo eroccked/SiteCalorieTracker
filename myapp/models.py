@@ -20,6 +20,7 @@ class Food(models.Model):
     def __str__(self):
         return self.name
 
+
 class Consume(models.Model):
     MEAL_TYPES = [
         ('breakfast', 'Сніданок'),
@@ -36,3 +37,29 @@ class Consume(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.food} ({self.meal_type}) - {self.weight}g"
+
+    # Додаємо властивості для обчислення БЖВК з урахуванням ваги
+    @property
+    def carbs_weighted(self):
+        # Перевіряємо, чи існує food, щоб уникнути помилок, якщо food було видалено
+        if self.food:
+            return self.food.carbs * (self.weight / 100)
+        return 0.0
+
+    @property
+    def calories_weighted(self):
+        if self.food:
+            return self.food.calories * (self.weight / 100)
+        return 0.0
+
+    @property
+    def protein_weighted(self):
+        if self.food:
+            return self.food.protein * (self.weight / 100)
+        return 0.0
+
+    @property
+    def fats_weighted(self):
+        if self.food:
+            return self.food.fats * (self.weight / 100)
+        return 0.0

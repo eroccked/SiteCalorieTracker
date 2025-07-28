@@ -1,36 +1,42 @@
-from django.shortcuts import render, redirect
-from .models import Food, Consume
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Food, Consume  # Тепер Consume має властивості для обчислення БЖВК
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.utils import timezone
-from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 
 
-@login_required
 @login_required
 def index(request):
     today = timezone.now().date()
 
     if request.method == 'POST':
-        food_name = request.POST['food_consumed']
+        food_id = request.POST['food_consumed']
         meal_type = request.POST['meal_type']
         weight = float(request.POST.get('weight', 100))
-        food = Food.objects.get(name=food_name)
-        Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=today, weight=weight)
+
+        try:
+            food = get_object_or_404(Food, id=food_id)
+            Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=today, weight=weight)
+        except ValueError:
+            print(f"Помилка: Недійсний ID їжі '{food_id}'")
+            # Можна додати повідомлення користувачу, наприклад, через Django messages framework
+            pass
 
     foods = Food.objects.all()
+    # Тепер consumed_food автоматично матиме доступ до carbs_weighted, calories_weighted тощо
     consumed_food = Consume.objects.filter(user=request.user, date=today).select_related('food')
 
-    # Додаємо обчислені атрибути до кожного item
-    for item in consumed_food:
-        factor = item.weight / 100
-        item.carbs_weighted = item.food.carbs * factor
-        item.calories_weighted = item.food.calories * factor
-        item.protein_weighted = item.food.protein * factor
-        item.fats_weighted = item.food.fats * factor
+    # Цей цикл, який додавав атрибути, тепер НЕ ПОТРІБЕН,
+    # оскільки вони є властивостями моделі Consume.
+    # for item in consumed_food:
+    #     factor = item.weight / 100
+    #     item.carbs_weighted = item.food.carbs * factor
+    #     item.calories_weighted = item.food.calories * factor
+    #     item.protein_weighted = item.food.protein * factor
+    #     item.fats_weighted = item.food.fats * factor
 
     meals = {
         'Сніданок': consumed_food.filter(meal_type='breakfast'),
@@ -46,6 +52,8 @@ def index(request):
         total_fats = 0
 
         for item in items:
+            # Тепер ми можемо безпечно звертатися до властивостей,
+            # оскільки вони обчислюються моделлю Consume.
             total_carbs += item.carbs_weighted
             total_calories += item.calories_weighted
             total_protein += item.protein_weighted
@@ -84,8 +92,8 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # логін після реєстрації
-            return redirect('index')  # або твій головний шлях
+            login(request, user)
+            return redirect('index')
     else:
         form = UserCreationForm()
     return render(request, 'register.html', {'form': form})
