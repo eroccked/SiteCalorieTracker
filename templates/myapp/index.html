@@ -8,6 +8,7 @@
         <div class="col-md-8">
             <div class="card mb-4 shadow">
                 <div class="card-body">
+                    <!-- Форма для додавання їжі (POST) -->
                     <form method="post" class="row g-3 align-items-end">
                         {% csrf_token %}
                         <div class="col-md-6">
@@ -39,46 +40,72 @@
                 </div>
             </div>
 
-            {% for meal_title, data in meals_data.items %}
-                <h5 class="mt-4">{{ meal_title }}</h5>
-                <table class="table table-bordered text-center align-middle">
-                    <thead class="table-dark">
-                    <tr>
-                        <th>Назва</th>
-                        <th>Вага (г)</th>
-                        <th>Вуглеводи</th>
-                        <th>Калорії</th>
-                        <th>Білки</th>
-                        <th>Жири</th>
-                        <th>Дія</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for item in data.items %}
+            <!-- Форма для вибору дати (GET) -->
+            <div class="card mb-4 shadow">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label for="selected_date" class="form-label">Оберіть дату:</label>
+                            <input type="date" name="selected_date" id="selected_date" class="form-control"
+                                   value="{{ selected_date|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Показати за дату</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Відображення даних за обрану дату -->
+            <h4 class="mt-4 text-center">Раціон на {{ selected_date|date:"d M Y" }}</h4>
+
+            {# Додано перевірку на наявність записів #}
+            {% if total_calories > 0 %}
+                {% for meal_title, data in meals_data.items %}
+                    <h5 class="mt-4">{{ meal_title }}</h5>
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-dark">
                         <tr>
-                            <td>{{ item.food.name }}</td>
-                            <td>{{ item.weight|floatformat:0 }}</td>
-                            <td>{{ item.carbs_weighted|floatformat:2 }}</td>
-                            <td>{{ item.calories_weighted|floatformat:2 }}</td>
-                            <td>{{ item.protein_weighted|floatformat:2 }}</td>
-                            <td>{{ item.fats_weighted|floatformat:2 }}</td>
-                            <td>
-                                <form method="post" action="{% url 'delete_consume' item.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">Видалити</button>
-                                </form>
-                            </td>
+                            <th>Назва</th>
+                            <th>Вага (г)</th>
+                            <th>Вуглеводи</th>
+                            <th>Калорії</th>
+                            <th>Білки</th>
+                            <th>Жири</th>
+                            <th>Дія</th>
                         </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <p><b>Всього:</b>
-                    Вуглеводи: {{ data.carbs|floatformat:2 }},
-                    Калорії: {{ data.calories|floatformat:2 }},
-                    Білки: {{ data.protein|floatformat:2 }},
-                    Жири: {{ data.fats|floatformat:2 }}
-                </p>
-            {% endfor %}
+                        </thead>
+                        <tbody>
+                        {% for item in data.items %}
+                            <tr>
+                                <td>{{ item.food.name }}</td>
+                                <td>{{ item.weight|floatformat:0 }}</td>
+                                <td>{{ item.carbs_weighted|floatformat:2 }}</td>
+                                <td>{{ item.calories_weighted|floatformat:2 }}</td>
+                                <td>{{ item.protein_weighted|floatformat:2 }}</td>
+                                <td>{{ item.fats_weighted|floatformat:2 }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'delete_consume' item.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger">Видалити</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <p><b>Всього:</b>
+                        Вуглеводи: {{ data.carbs|floatformat:2 }},
+                        Калорії: {{ data.calories|floatformat:2 }},
+                        Білки: {{ data.protein|floatformat:2 }},
+                        Жири: {{ data.fats|floatformat:2 }}
+                    </p>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info text-center mt-4" role="alert">
+                    На {{ selected_date|date:"d M Y" }} записів про спожиту їжу не знайдено.
+                </div>
+            {% endif %}
         </div>
 
         <div class="col-md-4">
@@ -91,10 +118,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const today = new Date();
-        document.getElementById("current-date").innerText = today.toLocaleString("uk-UA", {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
+        document.getElementById("current-date").innerText = "{{ selected_date|date:'l, d F Y' }}";
 
         const ctx = document.getElementById('nutritionChart').getContext('2d');
         new Chart(ctx, {

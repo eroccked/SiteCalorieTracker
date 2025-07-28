@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Food, Consume  # Тепер Consume має властивості для обчислення БЖВК
+from .models import Food, Consume
 from django.contrib.auth.decorators import login_required
-from datetime import datetime
+from datetime import datetime, date  # Додано date
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.utils import timezone
@@ -10,7 +10,14 @@ from django.views.decorators.http import require_POST
 
 @login_required
 def index(request):
-    today = timezone.now().date()
+    selected_date_str = request.GET.get('selected_date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = timezone.now().date()
+    else:
+        selected_date = timezone.now().date()
 
     if request.method == 'POST':
         food_id = request.POST['food_consumed']
@@ -19,24 +26,15 @@ def index(request):
 
         try:
             food = get_object_or_404(Food, id=food_id)
-            Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=today, weight=weight)
+            Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=timezone.now().date(),
+                                   weight=weight)
+            return redirect(f'/index/?selected_date={selected_date.strftime("%Y-%m-%d")}')
         except ValueError:
             print(f"Помилка: Недійсний ID їжі '{food_id}'")
-            # Можна додати повідомлення користувачу, наприклад, через Django messages framework
             pass
 
     foods = Food.objects.all()
-    # Тепер consumed_food автоматично матиме доступ до carbs_weighted, calories_weighted тощо
-    consumed_food = Consume.objects.filter(user=request.user, date=today).select_related('food')
-
-    # Цей цикл, який додавав атрибути, тепер НЕ ПОТРІБЕН,
-    # оскільки вони є властивостями моделі Consume.
-    # for item in consumed_food:
-    #     factor = item.weight / 100
-    #     item.carbs_weighted = item.food.carbs * factor
-    #     item.calories_weighted = item.food.calories * factor
-    #     item.protein_weighted = item.food.protein * factor
-    #     item.fats_weighted = item.food.fats * factor
+    consumed_food = Consume.objects.filter(user=request.user, date=selected_date).select_related('food')
 
     meals = {
         'Сніданок': consumed_food.filter(meal_type='breakfast'),
@@ -52,8 +50,6 @@ def index(request):
         total_fats = 0
 
         for item in items:
-            # Тепер ми можемо безпечно звертатися до властивостей,
-            # оскільки вони обчислюються моделлю Consume.
             total_carbs += item.carbs_weighted
             total_calories += item.calories_weighted
             total_protein += item.protein_weighted
@@ -84,6 +80,7 @@ def index(request):
         'total_calories': total_calories,
         'total_protein': total_protein,
         'total_fats': total_fats,
+        'selected_date': selected_date,  # Передаємо обрану дату в шаблон
     })
 
 
@@ -104,4 +101,7 @@ def register(request):
 def delete_consume(request, consume_id):
     item = get_object_or_404(Consume, id=consume_id, user=request.user)
     item.delete()
+    selected_date_str = request.GET.get('selected_date')
+    if selected_date_str:
+        return redirect(f'/index/?selected_date={selected_date_str}')
     return redirect('index')
