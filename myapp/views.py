@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Food, Consume
 from django.contrib.auth.decorators import login_required
-from datetime import datetime, date  # Додано date
+from datetime import datetime, date
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+import re
 
 
 @login_required
@@ -26,9 +27,9 @@ def index(request):
 
         try:
             food = get_object_or_404(Food, id=food_id)
-            Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=timezone.now().date(),
-                                   weight=weight)
-            return redirect(f'/index/?selected_date={selected_date.strftime("%Y-%m-%d")}')
+            Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=timezone.now().date(), weight=weight)
+            # Змінено: Перенаправляємо на кореневий URL ('/')
+            return redirect(f'/?selected_date={selected_date.strftime("%Y-%m-%d")}')
         except ValueError:
             print(f"Помилка: Недійсний ID їжі '{food_id}'")
             pass
@@ -73,14 +74,22 @@ def index(request):
     total_protein = sum(data['protein'] for data in meals_data.values())
     total_fats = sum(data['fats'] for data in meals_data.values())
 
-    return render(request, 'myapp/index.html', {
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    mobile_pat = re.compile(r'android|iphone|ipad|ipod|blackberry|windows phone|iemobile|opera mini', re.I)
+
+    if mobile_pat.search(user_agent):
+        template_name = 'myapp/index_mobile.html'
+    else:
+        template_name = 'myapp/index.html'
+
+    return render(request, template_name, {
         'foods': foods,
         'meals_data': meals_data,
         'total_carbs': total_carbs,
         'total_calories': total_calories,
         'total_protein': total_protein,
         'total_fats': total_fats,
-        'selected_date': selected_date,  # Передаємо обрану дату в шаблон
+        'selected_date': selected_date,
     })
 
 
@@ -103,5 +112,5 @@ def delete_consume(request, consume_id):
     item.delete()
     selected_date_str = request.GET.get('selected_date')
     if selected_date_str:
-        return redirect(f'/index/?selected_date={selected_date_str}')
-    return redirect('index')
+        return redirect(f'/?selected_date={selected_date_str}')
+    return redirect('/')

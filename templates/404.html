@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Вхід{% endblock %}</title>
-    <!-- Tailwind CSS CDN -->
+    <title>404 - Сторінку не знайдено!</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -95,64 +95,21 @@
             border-radius: 5px;
             background-color: transparent;
         }
-
-        /* Стилі для форми Django */
-        .form-group p {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
-            color: #4b5563; /* text-gray-700 */
-            margin-bottom: 0.25rem; /* mb-1 */
-        }
-        .form-group input[type="text"],
-        .form-group input[type="password"],
-        .form-group input[type="email"] {
-            display: block;
-            width: 100%;
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
-            font-size: 1rem; /* text-base */
-            line-height: 1.5;
-            border-width: 1px; /* border */
-            border-color: #d1d5db; /* border-gray-300 */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-            outline: none;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        .form-group input[type="text"]:focus,
-        .form-group input[type="password"]:focus,
-        .form-group input[type="email"]:focus {
-            border-color: #3b82f6; /* focus:border-blue-500 */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus:ring-blue-500 */
-        }
-        .errorlist {
-            color: #ef4444; /* text-red-500 */
-            font-size: 0.875rem; /* text-sm */
-            margin-top: 0.25rem;
-            list-style: none;
-            padding-left: 0;
-        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center justify-center relative">
 
     <div class="supermarket-bg absolute inset-0 z-0 opacity-20"></div>
 
-    <div class="relative z-10 p-6 bg-white bg-opacity-90 rounded-xl shadow-2xl w-full max-w-md mx-auto">
-        <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">Увійти в систему</h3>
-        <form method="post" class="space-y-4 form-group">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <div class="mt-6">
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    Увійти
-                </button>
-            </div>
-        </form>
-        <p class="mt-6 text-center text-gray-700">Не маєш акаунту? <a href="{% url 'register' %}" class="text-blue-600 hover:text-blue-800 font-medium">Зареєструватись</a></p>
+    <div class="relative z-10 text-center p-6 bg-white bg-opacity-90 rounded-xl shadow-2xl max-w-lg mx-auto">
+        <h1 class="text-6xl font-extrabold text-blue-600 mb-4 animate-bounce">404</h1>
+        <p class="text-3xl font-semibold mb-6">Ой! Сторінку не знайдено.</p>
+        <p class="text-lg text-gray-700 mb-8">
+            Схоже, наш чоловік з кошиком заблукав у супермаркеті, і сторінка, яку ви шукали, теж!
+        </p>
+        <a href="/" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+            Повернутися на головну
+        </a>
     </div>
 
     <div class="person-container">
