@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %} {# Завантажуємо static для використання тегу {% static %} #}
+
+{% block title %}Редагувати Профіль{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Редагувати Профіль</h3>
+
+                    <div class="text-center mb-4">
+                        {% if user_profile.profile_picture %}
+                            <img src="{{ user_profile.profile_picture.url }}" alt="Поточне фото профілю"
+                                 class="rounded-circle mx-auto d-block"
+                                 style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #007bff;">
+                        {% else %}
+                            {# Використовуємо дефолтне зображення, якщо його немає #}
+                            <img src="{% static 'profile_pics/profile.png' %}" alt="Фото профілю за замовчуванням"
+                                 class="rounded-circle mx-auto d-block"
+                                 style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #007bff;">
+                        {% endif %}
+                        <p class="mt-2 text-muted">Поточне фото профілю</p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {# Важливо: enctype="multipart/form-data" для завантаження файлів #}
+                        {% csrf_token %}
+
+                        {# Загальні помилки форми #}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}<br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {# Ручний рендеринг полів #}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    <div class="form-check">
+                                        {{ field }}
+                                        <label class="form-check-label" for="{{ field.id_for_label }}">
+                                            {{ field.label }}
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    {# Тут ми просто рендеримо поле, а класи Bootstrap додаються через forms.py #}
+                                    {{ field }}
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Зберегти зміни</button>
+                        <a href="{% url 'profile_view' %}" class="btn btn-secondary w-100 mt-2">Скасувати</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

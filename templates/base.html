@@ -25,6 +25,8 @@
     <div class="ms-auto navbar-user-area text-white">
         {% if user.is_authenticated %}
             <span>Привіт, {{ user.username }}</span>
+            {# Додано нове посилання на сторінку профілю #}
+            <a href="{% url 'profile_view' %}" class="btn btn-outline-light btn-sm">Мій Профіль</a>
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-light btn-sm">Вийти</button>
@@ -32,7 +34,7 @@
         {% else %}
             <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Увійти</a>
             <a href="{% url 'register' %}" class="btn btn-outline-light btn-sm">Зареєструватись</a>
-            
+
         {% endif %}
     </div>
 </nav>
