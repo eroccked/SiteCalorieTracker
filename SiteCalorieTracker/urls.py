@@ -22,6 +22,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('profile/', myapp_views.profile_view, name='profile_view'),
     path('profile/edit/', myapp_views.profile_edit, name='profile_edit'),
+    path('food-search-ajax/', myapp_views.food_search_ajax, name='food_search_ajax'),
 ]
 
 if settings.DEBUG:

@@ -16,51 +16,29 @@
 
         /* Анімація фону супермаркету */
         @keyframes supermarket-scroll {
-            from {
-                background-position: 0 0;
-            }
-            to {
-                background-position: -200% 0;
-            }
-            /* Прокручуємо фон */
+            from { background-position: 0 0; }
+            to { background-position: -200% 0; } /* Прокручуємо фон */
         }
 
         /* Анімація бігу чоловіка */
         @keyframes run-person {
-            0% {
-                transform: translateX(-100%) scaleX(1);
-            }
-            /* Починаємо зліва, обличчям вправо */
-            49% {
-                transform: translateX(100vw) scaleX(1);
-            }
-            /* Біжимо вправо */
-            50% {
-                transform: translateX(100vw) scaleX(-1);
-            }
-            /* Розвертаємося обличчям вліво */
-            99% {
-                transform: translateX(-100%) scaleX(-1);
-            }
-            /* Біжимо вліво */
-            100% {
-                transform: translateX(-100%) scaleX(1);
-            }
-            /* Розвертаємося обличчям вправо для наступного циклу */
+            0% { transform: translateX(-100%) scaleX(1); } /* Починаємо зліва, обличчям вправо */
+            49% { transform: translateX(100vw) scaleX(1); } /* Біжимо вправо */
+            50% { transform: translateX(100vw) scaleX(-1); } /* Розвертаємося обличчям вліво */
+            99% { transform: translateX(-100%) scaleX(-1); } /* Біжимо вліво */
+            100% { transform: translateX(-100%) scaleX(1); } /* Розвертаємося обличчям вправо для наступного циклу */
         }
 
         /* Анімація кошика */
         @keyframes run-basket {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100vw);
-            }
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
         }
 
         .supermarket-bg {
-            background-image: repeating-linear-gradient(90deg, #e2e8f0 0px, #e2e8f0 20px, transparent 20px, transparent 40px), /* Полиці */ repeating-linear-gradient(0deg, #cbd5e1 0px, #cbd5e1 5px, transparent 5px, transparent 10px); /* Підлога */
+            background-image:
+                repeating-linear-gradient(90deg, #e2e8f0 0px, #e2e8f0 20px, transparent 20px, transparent 40px), /* Полиці */
+                repeating-linear-gradient(0deg, #cbd5e1 0px, #cbd5e1 5px, transparent 5px, transparent 10px); /* Підлога */
             background-size: 100px 100px, 100% 50px;
             animation: supermarket-scroll 15s linear infinite;
             position: absolute;
@@ -139,20 +117,17 @@
                             {% csrf_token %}
                             <div class="col-md-6">
                                 <label for="food_search" class="form-label">Пошук їжі:</label>
-                                <input type="text" id="food_search" class="form-control mb-2"
-                                       placeholder="Введіть назву їжі...">
+                                <input type="text" id="food_search" class="form-control mb-2" placeholder="Введіть назву їжі...">
                                 <label for="food_consumed" class="form-label">Оберіть їжу:</label>
                                 <select name="food_consumed" id="food_consumed" class="form-select" required>
-                                    {% for food in foods %}
-                                        <option value="{{ food.id }}">{{ food.name }}</option>
-                                        {# Прибрано food.id з відображення #}
-                                    {% endfor %}
+                                    {# Опції будуть завантажуватися динамічно через AJAX #}
+                                    <option value="">Почніть вводити для пошуку...</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <label for="weight" class="form-label">Вага (г):</label>
                                 <input type="number" name="weight" id="weight" class="form-control" value="100" min="1"
-                                       step="any" required>
+                                    step="any" required>
                             </div>
                             <div class="col-md-2">
                                 <label for="meal_type" class="form-label">Тип прийому:</label>
@@ -177,7 +152,7 @@
                             <div class="col-md-6">
                                 <label for="selected_date" class="form-label">Оберіть дату:</label>
                                 <input type="date" name="selected_date" id="selected_date" class="form-control"
-                                       value="{{ selected_date|date:'Y-m-d' }}">
+                                    value="{{ selected_date|date:'Y-m-d' }}">
                             </div>
                             <div class="col-md-6 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary w-100">Показати за дату</button>
@@ -284,29 +259,53 @@
             }
         });
 
-        // JavaScript для пошуку в випадаючому списку
+        // JavaScript для AJAX-пошуку в випадаючому списку
         const foodSearchInput = document.getElementById('food_search');
         const foodConsumedSelect = document.getElementById('food_consumed');
-        const originalOptions = Array.from(foodConsumedSelect.options); // Зберігаємо всі оригінальні опції
+        let searchTimeout; // Для затримки запитів
 
-        foodSearchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase();
-            foodConsumedSelect.innerHTML = ''; // Очищаємо поточні опції
+        foodSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout); // Очищаємо попередній таймер
+            const searchTerm = this.value.trim(); // Отримуємо текст, обрізаємо пробіли
 
-            originalOptions.forEach(option => {
-                if (option.text.toLowerCase().includes(searchTerm)) {
-                    foodConsumedSelect.appendChild(option); // Додаємо лише ті, що відповідають пошуку
-                }
-            });
-
-            // Якщо після фільтрації немає жодної опції, можна додати повідомлення
-            if (foodConsumedSelect.options.length === 0) {
-                const noResultsOption = document.createElement('option');
-                noResultsOption.value = '';
-                noResultsOption.text = 'Нічого не знайдено';
-                noResultsOption.disabled = true;
-                foodConsumedSelect.appendChild(noResultsOption);
+            if (searchTerm.length < 2) { // Починаємо пошук, якщо введено 2 або більше символів
+                foodConsumedSelect.innerHTML = '<option value="">Почніть вводити для пошуку...</option>';
+                return;
             }
+
+            // Затримка перед відправкою запиту (наприклад, 300 мс)
+            searchTimeout = setTimeout(() => {
+                foodConsumedSelect.innerHTML = '<option value="">Завантаження...</option>'; // Повідомлення про завантаження
+
+                fetch(`{% url 'food_search_ajax' %}?q=${encodeURIComponent(searchTerm)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        foodConsumedSelect.innerHTML = ''; // Очищаємо поточні опції
+                        if (data.foods && data.foods.length > 0) {
+                            data.foods.forEach(food => {
+                                const option = document.createElement('option');
+                                option.value = food.id;
+                                option.text = food.name;
+                                foodConsumedSelect.appendChild(option);
+                            });
+                        } else {
+                            const noResultsOption = document.createElement('option');
+                            noResultsOption.value = '';
+                            noResultsOption.text = 'Нічого не знайдено';
+                            noResultsOption.disabled = true;
+                            foodConsumedSelect.appendChild(noResultsOption);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Помилка під час AJAX-запиту:', error);
+                        foodConsumedSelect.innerHTML = '<option value="">Помилка завантаження. Спробуйте ще раз.</option>';
+                    });
+            }, 300); // Затримка 300 мілісекунд
         });
     </script>
 {% endblock %}

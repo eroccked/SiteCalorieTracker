@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Food, Consume, UserProfile
-from .forms import UserProfileForm
+from .models import Food, Consume, UserProfile  # Імпортуємо UserProfile
+from .forms import UserProfileForm  # Імпортуємо нашу форму профілю
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, date
 from django.contrib.auth.forms import UserCreationForm
@@ -8,6 +8,7 @@ from django.contrib.auth import login
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 import re
+from django.http import JsonResponse  # <--- Додано для повернення JSON відповідей
 
 
 @login_required
@@ -30,13 +31,14 @@ def index(request):
             food = get_object_or_404(Food, id=food_id)
             Consume.objects.create(user=request.user, food=food, meal_type=meal_type, date=timezone.now().date(),
                                    weight=weight)
-            # Змінено: Перенаправляємо на кореневий URL ('/')
             return redirect(f'/?selected_date={selected_date.strftime("%Y-%m-%d")}')
         except ValueError:
             print(f"Помилка: Недійсний ID їжі '{food_id}'")
             pass
 
-    foods = Food.objects.all()
+    # Змінено: foods більше не завантажується тут.
+    # foods = Food.objects.all() # <--- Цей рядок видалено або закоментовано
+
     consumed_food = Consume.objects.filter(user=request.user, date=selected_date).select_related('food')
 
     meals = {
@@ -79,13 +81,14 @@ def index(request):
     user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
     mobile_pat = re.compile(r'android|iphone|ipad|ipod|blackberry|windows phone|iemobile|opera mini', re.I)
 
+    # Оскільки ми більше не працюємо з мобільною версією, можна спростити
     # if mobile_pat.search(user_agent):
     #     template_name = 'myapp/index_mobile.html'
     # else:
-    #     template_name = 'myapp/index.html'
     template_name = 'myapp/index.html'
+
     return render(request, template_name, {
-        'foods': foods,
+        # 'foods': foods, # <--- foods більше не передається
         'meals_data': meals_data,
         'total_carbs': total_carbs,
         'total_calories': total_calories,
@@ -118,11 +121,9 @@ def delete_consume(request, consume_id):
     return redirect('/')
 
 
+# Нова в'юшка для відображення профілю користувача
 @login_required
 def profile_view(request):
-    # Отримуємо об'єкт UserProfile поточного користувача.
-    # Оскільки ми налаштували сигнали на автоматичне створення, він завжди має існувати.
-    # Якщо з якоїсь причини не існує, get_object_or_404 викличе 404 помилку.
     user_profile = get_object_or_404(UserProfile, user=request.user)
     return render(request, 'myapp/profile.html', {'user_profile': user_profile})
 
@@ -133,16 +134,27 @@ def profile_edit(request):
     user_profile = get_object_or_404(UserProfile, user=request.user)
 
     if request.method == 'POST':
-        # При POST-запиті (відправка форми):
-        # Передаємо дані з request.POST та файли з request.FILES
-        # А також передаємо instance=user_profile, щоб форма оновила існуючий об'єкт
         form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
-            form.save()  # Зберігаємо зміни в профілі
-            return redirect('profile_view')  # Перенаправляємо на сторінку перегляду профілю
+            form.save()
+            return redirect('profile_view')
     else:
-        # При GET-запиті (перше завантаження форми):
-        # Ініціалізуємо форму даними з існуючого профілю
         form = UserProfileForm(instance=user_profile)
 
     return render(request, 'myapp/profile_edit.html', {'form': form, 'user_profile': user_profile})
+
+
+# Нова AJAX-в'юшка для пошуку продуктів
+def food_search_ajax(request):
+    query = request.GET.get('q', '')  # Отримуємо пошуковий запит
+
+    if query:
+        # Шукаємо продукти, назва яких містить запит (без урахування регістру)
+        # Обмежуємо кількість результатів, щоб не перевантажувати фронтенд
+        foods = Food.objects.filter(name__icontains=query).values('id', 'name')[:50]  # Беремо до 50 результатів
+    else:
+        foods = []  # Якщо запит порожній, повертаємо порожній список
+
+    # Перетворюємо QuerySet на список словників для JSON
+    food_list = list(foods)
+    return JsonResponse({'foods': food_list})
